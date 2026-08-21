@@ -50,14 +50,20 @@ public class ProductService {
     private final RecommendationService recommendationService;
     private final ScoringInputBuilder scoringInputBuilder;
     private final ProductMapper mapper;
+    private final ReviewFetchService reviewFetchService;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Dtos.ProductDetailDto getDetail(Long productId, int historyDays) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "No product with id " + productId));
 
         List<Offer> offers = offerRepository.findByProductId(productId);
+
+        // Reviews cost a separate marketplace call, so they are fetched lazily -
+        // when somebody actually opens the product - rather than for every
+        // search hit. Once stored they are never fetched again.
+        reviewFetchService.fetchReviewsIfMissing(product, offers);
 
         BigDecimal bestPrice = offers.stream()
                 .filter(o -> Boolean.TRUE.equals(o.getInStock()) && o.getPriceInr() != null)
