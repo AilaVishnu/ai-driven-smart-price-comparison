@@ -6,10 +6,9 @@ import { platformAccent } from '../utils/format.js'
  * Which platforms are actually live right now.
  *
  * <p>Deliberately candid. The marketplace adapters need a free API key, and
- * without one the app serves from fallback sources. Quietly showing that data as
- * though it came from Amazon or Flipkart would be the easy thing to do and the
- * wrong one, so the state of every source is on the page, including how much
- * monthly quota is left.
+ * without one no new listings can be fetched at all. Saying so beats leaving a
+ * user to wonder why a search came back thin, so the state of every source is
+ * on the page, including how much monthly quota is left.
  */
 export default function PlatformStatus({ compact = false }) {
   const { data: platforms, loading, error } = useApi(() => api.platforms(), [])
@@ -47,10 +46,9 @@ export default function PlatformStatus({ compact = false }) {
 
       {!anyLive && !compact && (
         <p className="xs subtle" style={{ marginTop: 'var(--space-2)', marginBottom: 0 }}>
-          Amazon.in and Flipkart are switched off because no RapidAPI key is configured, so
-          results come from the keyless fallback sources. Those catalogues do not overlap, so
-          cross-platform price comparison will look empty until a key is added. See{' '}
-          <code className="mono">docs/api-keys-setup.md</code>.
+          Amazon.in and Flipkart are switched off because no RapidAPI key is configured.
+          Searches will only return products already stored; nothing new can be fetched
+          until a key is added. See <code className="mono">docs/api-keys-setup.md</code>.
         </p>
       )}
     </div>

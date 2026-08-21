@@ -164,8 +164,8 @@ export default function SearchResults() {
 
             {!loading && !error && products.length === 0 && (
               <EmptyState title="Nothing matched that search">
-                Try a broader phrase, or clear a filter. If the marketplaces are switched off, the
-                catalogue only covers the keyless fallback sources.
+                Try a broader phrase, or clear a filter. If the marketplaces are switched off or
+                out of quota, only products already stored can be shown.
               </EmptyState>
             )}
 
