@@ -474,7 +474,13 @@ public class ProductMatchingService {
                 "home theatre", "home theater")) {
             return "speakers";
         }
-        if (containsAny(t, "laptop", "notebook", "macbook", "chromebook", "ultrabook")) {
+        // Includes the processor and OS names, not just the word "laptop". Real
+        // listings often omit it: "Acer Aspire 3 Intel Celeron ... 256 GB
+        // SSD/Windows 11" never says laptop, and matching on SSD alone filed it
+        // under storage.
+        if (containsAny(t, "laptop", "notebook", "macbook", "chromebook", "ultrabook",
+                "windows 11", "windows 10", "celeron", "pentium", "ryzen",
+                "core i3", "core i5", "core i7", "core i9", "thin and light")) {
             return "laptops";
         }
         if (containsAny(t, "tablet", "ipad", "tab")) {
@@ -492,7 +498,11 @@ public class ProductMatchingService {
         if (containsAny(t, "monitor")) {
             return "monitors";
         }
-        if (containsAny(t, "ssd", "hard drive", "hard disk", "pendrive", "memory card", "microsd")) {
+        // Storage as the product, not storage as a spec. Bare "ssd" appears in
+        // the title of nearly every laptop sold.
+        if (containsAny(t, "internal ssd", "external ssd", "portable ssd", "external hard",
+                "portable hard", "hard drive", "hard disk", "pendrive", "pen drive",
+                "flash drive", "memory card", "microsd", "sd card")) {
             return "storage";
         }
         if (containsAny(t, "camera", "dslr", "gopro")) {

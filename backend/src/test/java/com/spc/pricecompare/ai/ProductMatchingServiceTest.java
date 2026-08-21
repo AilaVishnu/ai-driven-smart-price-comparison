@@ -292,6 +292,20 @@ class ProductMatchingServiceTest {
     }
 
     @Test
+    @DisplayName("A spec mention does not outrank what the product actually is")
+    void doesNotConfuseSpecsWithProducts() {
+        // This laptop title never contains the word "laptop", and matching on
+        // the SSD it happens to mention filed it under storage.
+        assertEquals("laptops", ProductMatchingService.inferCategoryFromTitle(
+                "HP 15s Ryzen 5 16 GB/512 GB SSD/Windows 11 Home Thin and Light"));
+        // Storage as the product itself still classifies as storage.
+        assertEquals("storage", ProductMatchingService.inferCategoryFromTitle(
+                "SanDisk Ultra 1TB Portable SSD USB 3.2"));
+        assertEquals("storage", ProductMatchingService.inferCategoryFromTitle(
+                "WD Elements 2TB External Hard Drive"));
+    }
+
+    @Test
     @DisplayName("explain() exposes why a pair did or did not match")
     void explainSurfacesTheDecision() {
         RawListing pro = listing("AMAZON_IN", "A13", "Apple iPhone 15 Pro (128 GB)",
