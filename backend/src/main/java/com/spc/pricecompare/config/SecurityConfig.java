@@ -60,11 +60,17 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/api/auth/register", "/api/auth/login").permitAll();
+                    // Browsing the catalogue needs no account. Every public read
+                    // belongs here: a path missing from this list falls through to
+                    // anyRequest().authenticated() and answers 403 to anonymous
+                    // callers, which reads as an empty result rather than a
+                    // permissions problem.
                     auth.requestMatchers(HttpMethod.GET,
                             "/api/products/**",
                             "/api/categories",
                             "/api/platforms",
-                            "/api/deals").permitAll();
+                            "/api/deals",
+                            "/api/cross-platform").permitAll();
                     auth.requestMatchers(HttpMethod.POST, "/api/compare").permitAll();
                     auth.requestMatchers("/actuator/health", "/actuator/info").permitAll();
 
