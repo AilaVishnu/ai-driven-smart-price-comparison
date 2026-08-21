@@ -278,6 +278,20 @@ class ProductMatchingServiceTest {
     }
 
     @Test
+    @DisplayName("A speaker that mentions laptops is a speaker, not a laptop")
+    void classifiesSpeakersBeforeLaptops() {
+        // Seen in a real search: these two ranked above an actual laptop in a
+        // search for "laptop", because cheap items score well on price and the
+        // classifier had matched the word "Laptop" in their titles.
+        assertEquals("speakers", ProductMatchingService.inferCategoryFromTitle(
+                "artis Mini Portable Laptop/Desktop Speaker Black-Blue, 2.0 Channel"));
+        assertEquals("speakers", ProductMatchingService.inferCategoryFromTitle(
+                "artis S21 5 W Laptop/Desktop Speaker Black, 2.0 Channel"));
+        assertEquals("laptops", ProductMatchingService.inferCategoryFromTitle(
+                "Acer Aspire 3 Intel Celeron Dual Core 8 GB 256 GB SSD Windows 11"));
+    }
+
+    @Test
     @DisplayName("explain() exposes why a pair did or did not match")
     void explainSurfacesTheDecision() {
         RawListing pro = listing("AMAZON_IN", "A13", "Apple iPhone 15 Pro (128 GB)",

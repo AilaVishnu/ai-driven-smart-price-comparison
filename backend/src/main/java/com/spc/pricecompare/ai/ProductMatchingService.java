@@ -401,6 +401,9 @@ public class ProductMatchingService {
         if (h.contains("tablet") || h.contains("ipad")) {
             return "tablets";
         }
+        if (h.contains("speaker") || h.contains("soundbar") || h.contains("home-theat")) {
+            return "speakers";
+        }
         if (h.contains("headphone") || h.contains("earphone") || h.contains("earbud") || h.contains("audio")) {
             return "headphones";
         }
@@ -463,14 +466,25 @@ public class ProductMatchingService {
                 "earphone", "earphones", "airdopes", "buds", "neckband")) {
             return "headphones";
         }
+        // Before laptops on purpose. "Laptop/Desktop Speaker" contains "laptop",
+        // and filing a 420 rupee speaker as a laptop put it at the top of a
+        // laptop search, above an actual laptop, because cheap things score well
+        // on price. The noun the product IS beats the noun it mentions.
+        if (containsAny(t, "speaker", "soundbar", "sound bar", "woofer", "subwoofer",
+                "home theatre", "home theater")) {
+            return "speakers";
+        }
         if (containsAny(t, "laptop", "notebook", "macbook", "chromebook", "ultrabook")) {
             return "laptops";
         }
         if (containsAny(t, "tablet", "ipad", "tab")) {
             return "tablets";
         }
-        if (containsAny(t, "smartwatch", "smart watch", "smartband", "fitness band")) {
+        if (containsAny(t, "smartwatch", "smart watch")) {
             return "smartwatches";
+        }
+        if (containsAny(t, "smartband", "smart band", "fitness band", "fitness tracker")) {
+            return "smartbands";
         }
         if (containsAny(t, "television", " tv ", "smart tv", "led tv")) {
             return "televisions";
