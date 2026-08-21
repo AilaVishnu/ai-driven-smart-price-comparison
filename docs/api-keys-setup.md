@@ -204,7 +204,6 @@ Start the backend and watch the startup log. It reports every source honestly:
 --- Provider status ---
   Amazon.in [marketplace] configured - Live
   Flipkart [marketplace] configured - Live
-  DummyJSON Store [fallback] configured - Fallback source (mode=AUTO)
 ```
 
 Or ask the API:
@@ -272,19 +271,9 @@ providers.sources.amazon-in.monthly-quota=200
 providers.sources.flipkart.monthly-quota=200
 ```
 
-When a budget runs out, the app does not break: it serves stored data and, under
-`providers.fallback-mode=AUTO`, brings the keyless sources back in — while saying
-so plainly on the platforms endpoint rather than passing one off as the other.
+When a budget runs out the app does not break: it serves everything already
+stored and says so plainly on the platforms endpoint rather than pretending the
+source is still live.
 
 ---
 
-## Optional: turn the fallback sources off
-
-Once the marketplaces are live you may want marketplace data only:
-
-```properties
-providers.fallback-mode=NEVER
-```
-
-The trade-off is that if a marketplace is down or out of quota, searches return
-whatever is already stored and nothing more. `AUTO` is the recommended setting.

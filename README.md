@@ -28,8 +28,8 @@ npm run dev
 
 Then open <http://localhost:5173>.
 
-On first start the backend seeds a catalogue from the keyless sources so there
-is something to browse immediately. To verify everything at once:
+On first start the backend seeds a catalogue from the marketplaces so there is
+something to browse immediately. To verify everything at once:
 
 ```powershell
 .\scripts\smoke.ps1
@@ -39,22 +39,18 @@ is something to browse immediately. To verify everything at once:
 
 ## Read this before judging the demo
 
-The application runs with **no API key at all**, but what it can show you
-depends on which sources are switched on. It is upfront about this rather than
-papering over it — `GET /api/platforms`, the startup log, and the interface all
-report the true state of every source.
+The application needs **one free RapidAPI key** to fetch anything new. Without
+it the app still starts and serves whatever is already in the database, but no
+new listings can be retrieved and cross-platform comparison cannot grow. It is
+upfront about this rather than papering over it — `GET /api/platforms`, the
+startup log and the interface all report the true state of every source.
 
-| | Without a key (default) | With a free RapidAPI key |
-|---|---|---|
-| Catalogue | ~211 products from keyless sources | Real Amazon.in and Flipkart listings |
-| Prices | Real, converted to INR | Real, natively INR |
-| Reviews | Real review text | Real customer reviews |
-| **Cross-platform comparison** | **Not demonstrable** | **Working** |
+An earlier version shipped a second tier of keyless sources (DummyJSON,
+FakeStore) so the app could demo before a key existed. They were removed once
+both marketplaces worked: their catalogues are synthetic, they overlap with
+nothing so could never produce a cross-platform match, and they made up 42% of
+the catalogue with products no Indian price comparison would show.
 
-The last row is the important one. The keyless fallback catalogues do not
-overlap with each other, so "the same product on two platforms" has nothing to
-match. Every other feature — matching, sentiment, TOPSIS ranking, forecasting,
-natural-language search — works either way.
 
 **Adding a key takes about two minutes and costs nothing.** Get one by following
 [docs/api-keys-setup.md](docs/api-keys-setup.md), then paste it into the line
@@ -186,9 +182,9 @@ is built for that rather than in spite of it:
 - **Two caches** — a 10-minute in-memory cache in front of the database.
 - **`QuotaGuard`** counts every outbound call and refuses to exceed the budget.
 - **Tests never touch the network**, so a build cannot spend your quota.
-- **Graceful degradation** — when a marketplace is unavailable or spent, stored
-  data still serves and the keyless sources step back in, with the swap stated
-  plainly rather than hidden.
+- **Graceful degradation** — when a marketplace is unavailable or out of quota,
+  everything already stored still serves, and the platforms endpoint says which
+  source is down and why.
 
 ### Database
 
@@ -258,10 +254,10 @@ Browsing, searching and comparing need no account. Favourites and history do.
 
 Stated plainly, because they matter when judging what is on screen:
 
-1. **Cross-platform comparison needs a key.** Without one the fallback
-   catalogues do not overlap, so products show a single platform. The engine is
-   proven by tests and by merges on real data; the demo of the headline feature
-   is what is gated.
+1. **Cross-platform matches appear only where the catalogues overlap.** Flipkart
+   is browsed by category (its keyword search is paywalled) while Amazon is
+   searched by keyword, so a match needs a product both happen to carry. Search
+   something visible in the Flipkart catalogue and it works.
 2. **RapidAPI response shapes are unverified.** Their docs are
    JavaScript-rendered and could not be read without a key, so the adapters match
    several candidate field names rather than one guessed set. On the first live
