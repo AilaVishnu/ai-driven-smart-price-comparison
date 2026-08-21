@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ProductCard from '../components/ProductCard.jsx'
 import FilterPanel from '../components/FilterPanel.jsx'
@@ -6,6 +6,7 @@ import PlatformStatus from '../components/PlatformStatus.jsx'
 import { CardsLoading, EmptyState, ErrorState } from '../components/Common.jsx'
 import { api } from '../api/client.js'
 import { useApi } from '../hooks/useApi.js'
+import { formatPrice } from '../utils/format.js'
 
 const SORTS = [
   { value: 'relevance', label: 'Best value' },
@@ -16,26 +17,47 @@ const SORTS = [
   { value: 'savings_desc', label: 'Biggest saving' },
 ]
 
+const EMPTY_FILTERS = {
+  minPrice: '', maxPrice: '', brand: '', category: '',
+  minRating: '', platform: '', inStock: '', discounted: '',
+}
+
+/** Human label for an active filter, so it can be shown as a removable chip. */
+function filterLabel(key, value) {
+  switch (key) {
+    case 'minPrice': return `From ${formatPrice(value)}`
+    case 'maxPrice': return `Up to ${formatPrice(value)}`
+    case 'brand': return `Brand: ${value}`
+    case 'category': return `Category: ${value}`
+    case 'minRating': return `${value}★ and above`
+    case 'platform': return `On ${value.replace('_', '.').toLowerCase()}`
+    case 'inStock': return 'In stock only'
+    case 'discounted': return 'Discounted only'
+    default: return `${key}: ${value}`
+  }
+}
+
 export default function SearchResults() {
   const [params, setParams] = useSearchParams()
   const query = params.get('q') || ''
   const sort = params.get('sort') || 'relevance'
   const page = Number(params.get('page') || 0)
 
-  const [filters, setFilters] = useState({
-    minPrice: params.get('minPrice') || '',
-    maxPrice: params.get('maxPrice') || '',
-    brand: params.get('brand') || '',
-    category: params.get('category') || '',
-    minRating: params.get('minRating') || '',
-    platform: params.get('platform') || '',
-    inStock: params.get('inStock') || '',
-    discounted: params.get('discounted') || '',
-  })
+  const [filters, setFilters] = useState(() => ({
+    ...EMPTY_FILTERS,
+    ...Object.fromEntries(
+      Object.keys(EMPTY_FILTERS).map((k) => [k, params.get(k) || ''])
+    ),
+  }))
 
   const { data, error, loading, reload } = useApi(
     (signal) => api.search({ q: query, page, size: 24, sort, ...filters }, signal),
     [query, page, sort, JSON.stringify(filters)]
+  )
+
+  const activeFilters = useMemo(
+    () => Object.entries(filters).filter(([, v]) => v !== '' && v != null),
+    [filters]
   )
 
   function updateParam(key, value) {
@@ -47,34 +69,85 @@ export default function SearchResults() {
     setParams(next)
   }
 
+  function changeFilters(next) {
+    setFilters(next)
+    const p = new URLSearchParams(params)
+    p.delete('page')
+    setParams(p)
+  }
+
   const products = data ? data.products : []
   const totalPages = data ? data.totalPages : 0
 
   return (
     <div className="page">
-      <div className="container stack">
-        <div className="row-wrap search-head">
-          <h1 className="search-title">
-            {query ? <>Results for <span className="accent-text">{query}</span></> : 'All products'}
-          </h1>
-          {data && (
-            <span className="small muted">
-              {data.totalResults} product{data.totalResults === 1 ? '' : 's'}
-              {data.fetchedLive && <span className="badge badge-accent" style={{ marginLeft: 8 }}>
-                fetched live
-              </span>}
-            </span>
-          )}
-        </div>
+      <div className="container stack" style={{ gap: 'var(--space-5)' }}>
+        <header className="results-head">
+          <div>
+            <h1 className="results-title">
+              {query ? <>Results for <span className="accent-text">{query}</span></> : 'All products'}
+            </h1>
+            <p className="results-meta small muted">
+              {loading
+                ? 'Searching…'
+                : data
+                  ? `${data.totalResults} product${data.totalResults === 1 ? '' : 's'}`
+                  : ''}
+              {data && data.fetchedLive && (
+                <span className="badge badge-accent results-live">fetched live</span>
+              )}
+            </p>
+          </div>
 
-        {/* How the phrase was parsed. Showing the interpretation is what makes
-            the natural-language search trustworthy rather than magic. */}
+          <label className="results-sort">
+            <span className="xs subtle">Sort</span>
+            <select
+              className="select"
+              value={sort}
+              onChange={(e) => updateParam('sort', e.target.value)}
+              aria-label="Sort results by"
+            >
+              {SORTS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+        </header>
+
+        {/* What the phrase was understood to mean. Showing the interpretation is
+            what makes the natural-language search trustworthy rather than magic. */}
         {data && data.interpretedAs && data.interpretedAs.length > 0 && (
-          <div className="row-wrap">
-            <span className="xs subtle">Understood as:</span>
+          <div className="row-wrap chips-row">
+            <span className="xs subtle">Understood as</span>
             {data.interpretedAs.map((chip) => (
               <span className="badge badge-accent" key={chip}>{chip}</span>
             ))}
+          </div>
+        )}
+
+        {/* Active filters, each removable in one click. */}
+        {activeFilters.length > 0 && (
+          <div className="row-wrap chips-row">
+            <span className="xs subtle">Filters</span>
+            {activeFilters.map(([key, value]) => (
+              <button
+                key={key}
+                type="button"
+                className="badge chip-removable"
+                onClick={() => changeFilters({ ...filters, [key]: '' })}
+                title="Remove this filter"
+              >
+                {filterLabel(key, value)}
+                <span aria-hidden="true" className="chip-x">×</span>
+              </button>
+            ))}
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => changeFilters({ ...EMPTY_FILTERS })}
+            >
+              Clear all
+            </button>
           </div>
         )}
 
@@ -82,40 +155,17 @@ export default function SearchResults() {
 
         <div className="search-layout">
           <aside className="search-filters">
-            <FilterPanel
-              filters={filters}
-              onChange={(next) => {
-                setFilters(next)
-                const p = new URLSearchParams(params)
-                p.delete('page')
-                setParams(p)
-              }}
-            />
+            <FilterPanel filters={filters} onChange={changeFilters} />
           </aside>
 
           <div className="search-results stack">
-            <div className="row-wrap">
-              <label className="xs subtle" htmlFor="sort">Sort by</label>
-              <select
-                id="sort"
-                className="select"
-                style={{ width: 'auto' }}
-                value={sort}
-                onChange={(e) => updateParam('sort', e.target.value)}
-              >
-                {SORTS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </div>
-
             {loading && <CardsLoading count={9} />}
             {error && <ErrorState error={error} onRetry={reload} />}
 
             {!loading && !error && products.length === 0 && (
               <EmptyState title="Nothing matched that search">
-                Try a broader phrase, or relax the filters. If the marketplaces are switched
-                off, the catalogue only covers the fallback sources.
+                Try a broader phrase, or clear a filter. If the marketplaces are switched off, the
+                catalogue only covers the keyless fallback sources.
               </EmptyState>
             )}
 
@@ -128,17 +178,17 @@ export default function SearchResults() {
                 </div>
 
                 {totalPages > 1 && (
-                  <div className="row pagination">
+                  <nav className="pagination" aria-label="Pagination">
                     <button
                       type="button"
                       className="btn btn-sm"
                       disabled={page <= 0}
                       onClick={() => updateParam('page', String(page - 1))}
                     >
-                      Previous
+                      ← Previous
                     </button>
                     <span className="small muted">
-                      Page {page + 1} of {totalPages}
+                      Page <strong>{page + 1}</strong> of {totalPages}
                     </span>
                     <button
                       type="button"
@@ -146,9 +196,9 @@ export default function SearchResults() {
                       disabled={page >= totalPages - 1}
                       onClick={() => updateParam('page', String(page + 1))}
                     >
-                      Next
+                      Next →
                     </button>
-                  </div>
+                  </nav>
                 )}
               </>
             )}
