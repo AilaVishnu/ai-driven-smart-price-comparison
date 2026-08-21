@@ -21,8 +21,8 @@
   --viz-ink: var(--text);
   --viz-ink-secondary: var(--text-muted);
   --viz-ink-muted: var(--text-subtle);
-  --viz-grid: #e1e0d9;
-  --viz-axis: #c3c2b7;
+  --viz-grid: #e7e3ee;
+  --viz-axis: #d2ccdd;
 
   /* Single-series and sequential */
   --viz-series-1: #2a78d6;
@@ -31,31 +31,31 @@
   /* Diverging poles + neutral midpoint */
   --viz-pos: #2a78d6;
   --viz-neg: #e34948;
-  --viz-mid: #f0efec;
+  --viz-mid: #eae6f1;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme='light'])) .viz {
     color-scheme: dark;
-    --viz-grid: #2c2c2a;
-    --viz-axis: #383835;
+    --viz-grid: #2a2536;
+    --viz-axis: #3d3550;
     --viz-series-1: #3987e5;
     --viz-series-1-soft: #184f95;
     --viz-pos: #3987e5;
     --viz-neg: #e66767;
-    --viz-mid: #383835;
+    --viz-mid: #332c42;
   }
 }
 
 :root[data-theme='dark'] .viz {
   color-scheme: dark;
-  --viz-grid: #2c2c2a;
-  --viz-axis: #383835;
+  --viz-grid: #2a2536;
+  --viz-axis: #3d3550;
   --viz-series-1: #3987e5;
   --viz-series-1-soft: #184f95;
   --viz-pos: #3987e5;
   --viz-neg: #e66767;
-  --viz-mid: #383835;
+  --viz-mid: #332c42;
 }
 
 .viz-figure {
