@@ -6,14 +6,12 @@ import PlatformStatus from '../components/PlatformStatus.jsx'
 import { CardsLoading, ErrorState } from '../components/Common.jsx'
 import { api } from '../api/client.js'
 import { useApi } from '../hooks/useApi.js'
-import { formatCount, formatPrice } from '../utils/format.js'
 
 export default function Home() {
   const deals = useApi(() => api.deals(8), [])
   // One broad page, used both for the headline counts and to surface products
   // that genuinely appear on more than one platform.
   const catalogue = useApi(() => api.search({ q: '', size: 100 }), [])
-  const platforms = useApi(() => api.platforms(), [])
 
   const crossPlatform = useMemo(() => {
     if (!catalogue.data) return []
@@ -23,8 +21,6 @@ export default function Home() {
       .slice(0, 4)
   }, [catalogue.data])
 
-  const biggestSaving = crossPlatform.length ? crossPlatform[0].potentialSaving : null
-  const liveCount = platforms.data ? platforms.data.filter((p) => p.live).length : null
 
   return (
     <div className="page">
@@ -43,21 +39,6 @@ export default function Home() {
             <SearchBar autoFocus />
           </div>
 
-          {/* Real figures from the running catalogue, not marketing copy. */}
-          <dl className="hero-stats">
-            <div>
-              <dt>Products</dt>
-              <dd>{catalogue.data ? formatCount(catalogue.data.totalResults) : '—'}</dd>
-            </div>
-            <div>
-              <dt>Live sources</dt>
-              <dd>{liveCount === null ? '—' : liveCount}</dd>
-            </div>
-            <div>
-              <dt>Biggest saving</dt>
-              <dd>{biggestSaving ? formatPrice(biggestSaving) : '—'}</dd>
-            </div>
-          </dl>
         </div>
       </section>
 
