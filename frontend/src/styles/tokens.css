@@ -5,50 +5,60 @@
  * the values that actually change are redefined for dark. Nothing gets its sole
  * definition inside a media query, which is what keeps the two themes from
  * drifting apart as the app grows.
+ *
+ * The brand hue is violet for a specific reason rather than a stylistic one.
+ * Four colours on this interface already carry fixed meaning and cannot move:
+ * Amazon orange and Flipkart blue on the platform dots, green for the cheaper
+ * price and red for the dearer one. Violet is the one strong hue left that
+ * collides with none of them, so brand colour never gets mistaken for data.
+ *
+ * The neutrals are warm-tinted rather than blue-grey. A blue-grey scale beside
+ * a violet accent reads cold and slightly corporate; nudging the greys toward
+ * the accent hue makes the whole surface feel intentional.
  */
 
 :root {
   /* Surfaces, from page backdrop upward */
-  --bg: #f6f7f9;
+  --bg: #faf9fc;
   --surface: #ffffff;
   --surface-raised: #ffffff;
-  --surface-sunken: #eef0f4;
-  --surface-hover: #f0f2f6;
+  --surface-sunken: #f4f2f8;
+  --surface-hover: #f0edf6;
 
   /* Text */
-  --text: #14161a;
-  --text-muted: #5b6472;
-  --text-subtle: #8892a0;
+  --text: #17141f;
+  --text-muted: #5c5568;
+  --text-subtle: #8b8397;
   --text-inverse: #ffffff;
 
   /* Lines */
-  --border: #dfe3ea;
-  --border-strong: #c6ccd8;
+  --border: #e7e3ee;
+  --border-strong: #d2ccdd;
 
-  /* Brand: a deep indigo, kept away from the platform colours below so a
-     product card never looks like it belongs to one particular marketplace. */
-  --accent: #4338ca;
-  --accent-hover: #3730a3;
-  --accent-soft: #eef2ff;
-  --accent-border: #c7d2fe;
+  /* Brand */
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-soft: #f3eeff;
+  --accent-border: #ddd0fe;
+  --accent-contrast: #ffffff;
 
   /* Semantic. Green reads as "cheaper/better", amber as "hold", red as "worse". */
-  --positive: #047857;
+  --positive: #059669;
   --positive-soft: #ecfdf5;
   --positive-border: #a7f3d0;
   --warning: #b45309;
   --warning-soft: #fffbeb;
   --warning-border: #fde68a;
-  --negative: #b91c1c;
+  --negative: #dc2626;
   --negative-soft: #fef2f2;
   --negative-border: #fecaca;
-  --neutral: #4b5563;
-  --neutral-soft: #f3f4f6;
+  --neutral: #5c5568;
+  --neutral-soft: #f4f2f8;
 
-  /* Platform accents, used only for small badges */
+  /* Platform accents, used only for small badges and dots */
   --platform-amazon: #ff9900;
   --platform-flipkart: #2874f0;
-  --platform-fallback: #6b7280;
+  --platform-fallback: #8b8397;
 
   /* Spacing scale */
   --space-1: 0.25rem;
@@ -60,15 +70,16 @@
   --space-7: 3rem;
 
   /* Radii */
-  --radius-sm: 6px;
-  --radius: 10px;
+  --radius-sm: 7px;
+  --radius: 11px;
   --radius-lg: 16px;
   --radius-full: 999px;
 
-  /* Elevation */
-  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
-  --shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
-  --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.12);
+  /* Elevation, tinted toward the brand rather than neutral black */
+  --shadow-sm: 0 1px 2px rgba(35, 22, 61, 0.06);
+  --shadow: 0 4px 14px rgba(35, 22, 61, 0.09);
+  --shadow-lg: 0 18px 44px rgba(35, 22, 61, 0.16);
+  --ring: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 
   /* Type */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -91,26 +102,27 @@
    values that differ are restated. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0d1015;
-    --surface: #161a21;
-    --surface-raised: #1d222b;
-    --surface-sunken: #11141a;
-    --surface-hover: #222833;
+    --bg: #0e0c13;
+    --surface: #17141f;
+    --surface-raised: #1e1a29;
+    --surface-sunken: #120f19;
+    --surface-hover: #241f32;
 
-    --text: #eef1f6;
-    --text-muted: #9aa4b2;
-    --text-subtle: #6b7684;
+    --text: #f5f3f7;
+    --text-muted: #a79fb5;
+    --text-subtle: #786f88;
 
-    --border: #262d38;
-    --border-strong: #38414f;
+    --border: #2a2536;
+    --border-strong: #3d3550;
 
-    --accent: #8b8ef0;
-    --accent-hover: #a5a7f5;
-    --accent-soft: #1e2140;
-    --accent-border: #363a6b;
+    --accent: #a78bfa;
+    --accent-hover: #c4b5fd;
+    --accent-soft: #241c3b;
+    --accent-border: #4c3d80;
+    --accent-contrast: #17141f;
 
     --positive: #34d399;
-    --positive-soft: #0d2a20;
+    --positive-soft: #0c2a20;
     --positive-border: #1b5c45;
     --warning: #fbbf24;
     --warning-soft: #2b2110;
@@ -118,37 +130,40 @@
     --negative: #f87171;
     --negative-soft: #2c1416;
     --negative-border: #5f2326;
-    --neutral: #9aa4b2;
-    --neutral-soft: #1d222b;
+    --neutral: #a79fb5;
+    --neutral-soft: #1e1a29;
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
-    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+    --platform-fallback: #786f88;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.6);
   }
 }
 
 /* The explicit toggle must win in both directions. */
 :root[data-theme="dark"] {
-  --bg: #0d1015;
-  --surface: #161a21;
-  --surface-raised: #1d222b;
-  --surface-sunken: #11141a;
-  --surface-hover: #222833;
+  --bg: #0e0c13;
+  --surface: #17141f;
+  --surface-raised: #1e1a29;
+  --surface-sunken: #120f19;
+  --surface-hover: #241f32;
 
-  --text: #eef1f6;
-  --text-muted: #9aa4b2;
-  --text-subtle: #6b7684;
+  --text: #f5f3f7;
+  --text-muted: #a79fb5;
+  --text-subtle: #786f88;
 
-  --border: #262d38;
-  --border-strong: #38414f;
+  --border: #2a2536;
+  --border-strong: #3d3550;
 
-  --accent: #8b8ef0;
-  --accent-hover: #a5a7f5;
-  --accent-soft: #1e2140;
-  --accent-border: #363a6b;
+  --accent: #a78bfa;
+  --accent-hover: #c4b5fd;
+  --accent-soft: #241c3b;
+  --accent-border: #4c3d80;
+  --accent-contrast: #17141f;
 
   --positive: #34d399;
-  --positive-soft: #0d2a20;
+  --positive-soft: #0c2a20;
   --positive-border: #1b5c45;
   --warning: #fbbf24;
   --warning-soft: #2b2110;
@@ -156,10 +171,12 @@
   --negative: #f87171;
   --negative-soft: #2c1416;
   --negative-border: #5f2326;
-  --neutral: #9aa4b2;
-  --neutral-soft: #1d222b;
+  --neutral: #a79fb5;
+  --neutral-soft: #1e1a29;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --platform-fallback: #786f88;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.6);
 }
