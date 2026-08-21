@@ -157,6 +157,29 @@ public class ProductService {
                 .toList();
     }
 
+    /**
+     * Products available on more than one platform, biggest saving first.
+     *
+     * <p>The headline feature, so it gets its own query rather than being
+     * filtered out of whatever happened to be on the first page of a search.
+     */
+    @Transactional(readOnly = true)
+    public List<Dtos.ProductSummaryDto> getCrossPlatform(int limit) {
+        // Two steps on purpose: grouping offers by product is what identifies a
+        // multi-platform product, and combining that with a fetch join on the
+        // same query returned nothing at all.
+        List<Long> ids = productRepository.findCrossPlatformIds();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return productRepository.findAllByIdWithOffers(ids).stream()
+                .map(p -> mapper.toSummary(p, new ArrayList<>(p.getOffers()), null))
+                .sorted(Comparator.comparing(Dtos.ProductSummaryDto::potentialSaving,
+                        Comparator.nullsLast(BigDecimal::compareTo)).reversed())
+                .limit(Math.max(1, limit))
+                .toList();
+    }
+
     /** Biggest live discounts, backing the deals page. */
     @Transactional(readOnly = true)
     public List<Dtos.ProductSummaryDto> getDeals(int limit) {

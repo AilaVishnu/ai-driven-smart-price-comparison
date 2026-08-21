@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import SearchBar from '../components/SearchBar.jsx'
 import ProductCard from '../components/ProductCard.jsx'
@@ -9,17 +8,9 @@ import { useApi } from '../hooks/useApi.js'
 
 export default function Home() {
   const deals = useApi(() => api.deals(8), [])
-  // One broad page, used both for the headline counts and to surface products
-  // that genuinely appear on more than one platform.
-  const catalogue = useApi(() => api.search({ q: '', size: 100 }), [])
-
-  const crossPlatform = useMemo(() => {
-    if (!catalogue.data) return []
-    return catalogue.data.products
-      .filter((p) => p.platformCount > 1)
-      .sort((a, b) => Number(b.potentialSaving || 0) - Number(a.potentialSaving || 0))
-      .slice(0, 4)
-  }, [catalogue.data])
+  // Asked of the server rather than filtered out of one page of search results,
+  // which found one of six because the rest sat on later pages.
+  const crossPlatform = useApi(() => api.crossPlatform(4), [])
 
 
   return (
@@ -45,7 +36,7 @@ export default function Home() {
       <div className="container stack" style={{ gap: 'var(--space-7)' }}>
         <PlatformStatus />
 
-        {crossPlatform.length > 0 && (
+        {crossPlatform.data && crossPlatform.data.length > 0 && (
           <section>
             <div className="row section-head">
               <div>
@@ -56,7 +47,7 @@ export default function Home() {
               </div>
             </div>
             <div className="product-grid">
-              {crossPlatform.map((product) => (
+              {crossPlatform.data.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>

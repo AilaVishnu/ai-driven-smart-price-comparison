@@ -45,6 +45,22 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.offers")
     List<Product> findAllWithOffers();
 
+    /**
+     * Products carried by more than one platform.
+     *
+     * <p>Asked of the database rather than found by filtering a page of results.
+     * The home page used to pull the first hundred products and filter them,
+     * which surfaced one cross-platform product out of six purely because the
+     * other five sat on later pages - hiding the feature the whole application
+     * exists to show.
+     */
+    @Query("""
+           SELECT o.product.id FROM Offer o
+           GROUP BY o.product.id
+           HAVING COUNT(DISTINCT o.platform.id) > 1
+           """)
+    List<Long> findCrossPlatformIds();
+
     Optional<Product> findByNormalizedTitleAndBrand(String normalizedTitle, String brand);
 
     List<Product> findByBrandIgnoreCase(String brand);

@@ -48,6 +48,12 @@ public class CatalogController {
                 .toList();
     }
 
+    /** Products found on more than one platform - the comparison the app is for. */
+    @GetMapping("/cross-platform")
+    public List<Dtos.ProductSummaryDto> crossPlatform(@RequestParam(defaultValue = "8") int limit) {
+        return productService.getCrossPlatform(limit);
+    }
+
     @GetMapping("/deals")
     public List<Dtos.ProductSummaryDto> deals(@RequestParam(defaultValue = "24") int limit) {
         return productService.getDeals(limit);

@@ -106,6 +106,7 @@ export const api = {
   categories: () => request('/categories'),
   platforms: () => request('/platforms'),
   deals: (limit = 24) => request(`/deals?limit=${limit}`),
+  crossPlatform: (limit = 8) => request(`/cross-platform?limit=${limit}`),
 
   // --- comparison ---
   compare: (productIds, weights) =>
