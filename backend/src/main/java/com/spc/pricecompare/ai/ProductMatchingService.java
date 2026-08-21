@@ -459,7 +459,13 @@ public class ProductMatchingService {
 
         if (containsAny(t, "charger", "cable", "adapter", "case", "cover", "screen guard",
                 "tempered glass", "screen protector", "pouch", "stand", "holder",
-                "power bank", "powerbank", "lamp", "skin")) {
+                "power bank", "powerbank", "lamp", "skin",
+                // Things sold *for* a device rather than being one. A fill light
+                // and a screen cleaner both carry "Laptop" in their titles and
+                // were surfacing inside a laptop search.
+                "cleaner", "cleaning", "gel", "wipes", "fill light", "ring light",
+                "tripod", "mount", "sleeve", "backpack", "hub", "dock",
+                "keyboard protector", "dust cover", "cooling pad")) {
             return "accessories";
         }
         if (containsAny(t, "earbud", "earbuds", "headphone", "headphones", "headset",

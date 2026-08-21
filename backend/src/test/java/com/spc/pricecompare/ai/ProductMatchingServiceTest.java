@@ -292,6 +292,18 @@ class ProductMatchingServiceTest {
     }
 
     @Test
+    @DisplayName("Something sold for a laptop is not a laptop")
+    void classifiesLaptopAccessoriesAsAccessories() {
+        // Both appeared inside a search for "laptop", at 379 and 130 rupees.
+        assertEquals("accessories", ProductMatchingService.inferCategoryFromTitle(
+                "Hold up Mini Fill Lights for Cell Phone Laptop"));
+        assertEquals("accessories", ProductMatchingService.inferCategoryFromTitle(
+                "NIBAR Screen Cleaner Gel for Computers, Laptops"));
+        assertEquals("accessories", ProductMatchingService.inferCategoryFromTitle(
+                "Cooling Pad for Laptop with 5 Fans"));
+    }
+
+    @Test
     @DisplayName("A spec mention does not outrank what the product actually is")
     void doesNotConfuseSpecsWithProducts() {
         // This laptop title never contains the word "laptop", and matching on
