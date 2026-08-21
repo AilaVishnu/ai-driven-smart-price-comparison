@@ -1,103 +1,122 @@
 import { Link } from 'react-router-dom'
 import { useApp } from '../hooks/AppContext.jsx'
-import { formatCount, formatPercent, formatPrice, formatRating, platformAccent } from '../utils/format.js'
+import PriceComparison from './PriceComparison.jsx'
 import ValueScore from './ValueScore.jsx'
+import {
+  formatCount,
+  formatPercent,
+  formatPrice,
+  formatRating,
+  platformAccent,
+} from '../utils/format.js'
 
+/**
+ * A product in a results grid.
+ *
+ * <p>Laid out so the answer is readable without stopping to parse it: price is
+ * the largest thing on the card, and directly beneath it sits the per-platform
+ * comparison. Previously the card said only that two platforms carried the
+ * product and left the shopper to open it to find out what either charged,
+ * which buried the one thing the application exists to tell them.
+ */
 export default function ProductCard({ product }) {
   const { inCompare, toggleCompare, user, favoriteIds, toggleFavorite } = useApp()
+
   const selected = inCompare(product.id)
   const favorited = favoriteIds.includes(product.id)
   const rating = formatRating(product.rating)
-
-  const saving = Number(product.potentialSaving || 0)
+  const multiPlatform = product.platformCount > 1
+  const discount = Number(product.maxDiscountPct || 0)
 
   return (
-    <article className={`product-card${selected ? ' product-card-selected' : ''}`}>
-      <Link to={`/product/${product.id}`} className="product-card-media">
+    <article className={`pcard${selected ? ' pcard-selected' : ''}`}>
+      <Link to={`/product/${product.id}`} className="pcard-media" tabIndex={-1} aria-hidden="true">
         {product.imageUrl ? (
           <img src={product.imageUrl} alt="" loading="lazy" />
         ) : (
-          <div className="product-card-placeholder" aria-hidden="true">📦</div>
+          <div className="pcard-noimage">📦</div>
         )}
-        {product.maxDiscountPct > 0 && (
-          <span className="badge badge-positive product-card-discount">
-            {formatPercent(product.maxDiscountPct)} off
-          </span>
+
+        <div className="pcard-flags">
+          {discount > 0 && <span className="flag flag-save">{formatPercent(discount)} off</span>}
+          {multiPlatform && (
+            <span className="flag flag-compare">on {product.platformCount} platforms</span>
+          )}
+        </div>
+
+        {product.inStock === false && (
+          <div className="pcard-oos"><span>Out of stock</span></div>
         )}
       </Link>
 
-      <div className="product-card-body">
-        <Link to={`/product/${product.id}`} className="product-card-title clamp-2">
-          {product.title}
-        </Link>
-
-        <div className="row-wrap product-card-meta">
-          {product.brand && <span className="xs subtle">{product.brand}</span>}
-          {rating && (
-            <span className="xs product-card-rating" title={`${rating} out of 5`}>
-              ★ {rating}
-              {product.ratingCount > 0 && (
-                <span className="subtle"> ({formatCount(product.ratingCount)})</span>
-              )}
-            </span>
-          )}
+      <div className="pcard-body">
+        <div className="pcard-heading">
+          {product.brand && <span className="pcard-brand">{product.brand}</span>}
+          <Link to={`/product/${product.id}`} className="pcard-title clamp-2">
+            {product.title}
+          </Link>
         </div>
 
-        <div className="product-card-price-row">
-          <div>
-            <div className="product-card-price">{formatPrice(product.bestPrice)}</div>
-            {/* Only shown when platforms actually disagree - a zero saving line
-                would be noise on every card. */}
-            {saving > 0 && (
-              <div className="xs product-card-saving">
-                Save {formatPrice(saving)} vs highest
-              </div>
+        {rating && (
+          <div className="pcard-rating">
+            <span className="stars" aria-hidden="true">★</span>
+            <strong>{rating}</strong>
+            {product.ratingCount > 0 && (
+              <span className="subtle">{formatCount(product.ratingCount)} ratings</span>
             )}
           </div>
+        )}
+
+        <div className="pcard-price-row">
+          <div className="pcard-price-block">
+            <span className="pcard-price">{formatPrice(product.bestPrice)}</span>
+            {multiPlatform ? (
+              <span className="xs subtle">best of {product.platformCount} platforms</span>
+            ) : (
+              product.bestPlatformName && (
+                <span className="xs subtle pcard-only">
+                  <span
+                    className="platform-dot"
+                    style={{ background: platformAccent(product.bestPlatformCode) }}
+                    aria-hidden="true"
+                  />
+                  {product.bestPlatformName} only
+                </span>
+              )
+            )}
+          </div>
+
           {product.valueScore !== null && product.valueScore !== undefined && (
-            <ValueScore score={product.valueScore} size={44} />
+            <ValueScore score={product.valueScore} size={46} />
           )}
         </div>
 
-        <div className="row-wrap product-card-platforms">
-          {product.bestPlatformName && (
-            <span
-              className="badge product-card-platform"
-              style={{ borderColor: platformAccent(product.bestPlatformCode) }}
-            >
-              <span
-                className="platform-dot"
-                style={{ background: platformAccent(product.bestPlatformCode) }}
-                aria-hidden="true"
-              />
-              {product.bestPlatformName}
-            </span>
-          )}
-          {product.platformCount > 1 && (
-            <span className="badge badge-accent">on {product.platformCount} platforms</span>
-          )}
-          {product.inStock === false && <span className="badge badge-negative">Out of stock</span>}
-        </div>
+        {/* The comparison itself, not merely a count of platforms. */}
+        <PriceComparison
+          platformPrices={product.platformPrices}
+          saving={product.potentialSaving}
+          compact
+        />
 
-        <div className="row product-card-actions">
+        <div className="pcard-actions">
           <button
             type="button"
-            className={selected ? 'btn btn-primary btn-sm' : 'btn btn-sm'}
+            className={selected ? 'btn btn-primary btn-sm pcard-compare' : 'btn btn-sm pcard-compare'}
             onClick={() => toggleCompare(product.id)}
             aria-pressed={selected}
           >
-            {selected ? 'In compare' : 'Compare'}
+            {selected ? 'Added' : 'Compare'}
           </button>
           {user && (
             <button
               type="button"
-              className="btn btn-ghost btn-sm product-card-fav"
+              className="btn btn-sm pcard-fav"
               onClick={() => toggleFavorite(product.id)}
               aria-pressed={favorited}
               aria-label={favorited ? 'Remove from saved' : 'Save this product'}
               title={favorited ? 'Remove from saved' : 'Save this product'}
             >
-              <span aria-hidden="true" style={{ color: favorited ? 'var(--negative)' : 'inherit' }}>
+              <span aria-hidden="true" className={favorited ? 'heart heart-on' : 'heart'}>
                 {favorited ? '♥' : '♡'}
               </span>
             </button>
