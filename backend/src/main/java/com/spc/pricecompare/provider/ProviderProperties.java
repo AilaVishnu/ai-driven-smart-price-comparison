@@ -36,7 +36,6 @@ public class ProviderProperties {
 
     private int searchLimit = 20;
 
-    private FallbackMode fallbackMode = FallbackMode.AUTO;
 
     private Map<String, Source> sources = new LinkedHashMap<>();
 
@@ -87,21 +86,12 @@ public class ProviderProperties {
         return sources.getOrDefault(key, new Source());
     }
 
-    public enum FallbackMode {
-        /** Use the no-key sources only when the marketplaces cannot serve. */
-        AUTO,
-        /** Always query the no-key sources too. */
-        ALWAYS,
-        /** Marketplaces only. */
-        NEVER
-    }
-
     @Getter
     @Setter
     public static class Source {
         private boolean enabled = true;
-        /** True for the RapidAPI marketplaces; false for the no-key fallbacks. */
-        private boolean primary = false;
+        /** True for the RapidAPI marketplaces. */
+        private boolean primary = true;
         private String host;
         private String country;
         /** Monthly call budget enforced by QuotaGuard. 0 means unlimited. */

@@ -33,9 +33,8 @@ import java.util.Random;
  * matters more than usual here: with only a few hundred marketplace calls a
  * month, re-seeding on every boot would exhaust the budget in a day.
  *
- * <p>When no marketplace key is configured it pulls the fallback catalogues
- * whole, which is two HTTP calls for a couple of hundred products rather than
- * one call per search term.
+ * <p>With no marketplace configured there is nothing to seed from, and the
+ * startup log says so rather than filling the catalogue with stand-in data.
  */
 @Component
 @RequiredArgsConstructor
@@ -100,7 +99,7 @@ public class CatalogBootstrapRunner implements ApplicationRunner {
         for (ProviderStatus status : providerRegistry.statuses()) {
             log.info("  {} [{}] {} - {}",
                     status.displayName(),
-                    status.primary() ? "marketplace" : "fallback",
+                    "marketplace",
                     status.configured() ? "configured" : "unavailable",
                     status.note());
         }
@@ -113,9 +112,8 @@ public class CatalogBootstrapRunner implements ApplicationRunner {
                     + "backend/src/main/resources/application-local.properties "
                     + "(providers.rapidapi-key=...) and restart.");
         } else if (!providerProperties.hasRapidApiKey()) {
-            log.warn("No RapidAPI key configured, so Amazon.in and Flipkart are unavailable and "
-                    + "the app is running on fallback sources. Those catalogues do not overlap, "
-                    + "so cross-platform comparison will look empty. Add a free key to "
+            log.warn("No RapidAPI key configured, so Amazon.in and Flipkart are unavailable. "
+                    + "Searches will serve only what is already stored. Add a free key to "
                     + "backend/src/main/resources/application-local.properties - "
                     + "see docs/api-keys-setup.md.");
         } else {
@@ -132,7 +130,8 @@ public class CatalogBootstrapRunner implements ApplicationRunner {
         List<ProductProvider> primaries = providerRegistry.usablePrimaries();
 
         if (primaries.isEmpty()) {
-            seedFromFallbackCatalogues();
+            log.warn("No usable marketplace, so there is nothing to seed from. Add a RapidAPI key "
+                    + "and restart - see docs/api-keys-setup.md.");
             return;
         }
 
@@ -210,36 +209,6 @@ public class CatalogBootstrapRunner implements ApplicationRunner {
             }
         }
         log.info("Flipkart seed complete: {} listings ingested", total);
-    }
-
-    /**
-     * Pulls the keyless catalogues in full.
-     *
-     * <p>One call each instead of one per search term, which is both faster and
-     * gives a far broader catalogue than repeated keyword searches would.
-     */
-    private void seedFromFallbackCatalogues() {
-        log.info("No marketplace configured; seeding from fallback catalogues");
-        List<RawListing> all = new ArrayList<>();
-
-        for (ProductProvider provider : providerRegistry.configuredFallbacks()) {
-            try {
-                if (provider instanceof DummyJsonProvider dummyJson) {
-                    all.addAll(dummyJson.fetchAll(200));
-                } else if (provider instanceof FakeStoreProvider fakeStore) {
-                    all.addAll(fakeStore.fetchAll(50));
-                }
-            } catch (Exception e) {
-                log.warn("Fallback seed from {} failed: {}", provider.platformCode(), e.toString());
-            }
-        }
-
-        if (all.isEmpty()) {
-            log.warn("Fallback seeding returned nothing. The app will still run, but the catalogue "
-                    + "is empty until a search fetches something. Check network access.");
-            return;
-        }
-        ingestionService.ingest(all);
     }
 
     /**

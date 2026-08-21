@@ -16,7 +16,7 @@ public interface ProductProvider {
     /** Human-readable name, used in logs and in the provider probe output. */
     String displayName();
 
-    /** True for the real Indian marketplaces; false for the no-key fallbacks. */
+    /** True for a real marketplace that needs an API key. */
     boolean isPrimary();
 
     /**

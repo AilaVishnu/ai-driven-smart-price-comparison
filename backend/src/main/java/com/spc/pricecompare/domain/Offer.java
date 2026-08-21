@@ -9,8 +9,8 @@ import java.time.Instant;
 /**
  * One platform's listing of a {@link Product}.
  *
- * <p>Prices are held in INR. The Indian marketplaces return INR natively; the
- * fallback sources are converted on ingest so every comparison is like-for-like.
+ * <p>Prices are held in INR. The Indian marketplaces return INR natively; any
+ * other currency is converted on ingest so every comparison is like-for-like.
  */
 @Entity
 @Table(name = "offers",

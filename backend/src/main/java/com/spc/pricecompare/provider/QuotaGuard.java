@@ -41,8 +41,7 @@ public class QuotaGuard {
     private volatile String currentPeriod = period();
 
     /**
-     * @return true if a call may proceed. A quota of 0 means unlimited, which is
-     *         how the no-key fallback providers are configured.
+     * @return true if a call may proceed. A quota of 0 means unlimited.
      */
     public boolean tryAcquire(String platformCode, int monthlyQuota) {
         rollOverIfNewMonth();

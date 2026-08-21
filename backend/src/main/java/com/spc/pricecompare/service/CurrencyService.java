@@ -14,10 +14,11 @@ import java.util.Map;
  * Converts source-currency prices into INR, the base currency of the whole
  * application.
  *
- * <p>Amazon.in and Flipkart quote INR natively, so this only matters for the
- * fallback sources, which quote USD. The rate is fetched from a free, keyless
- * endpoint and held for a day - exchange rates move far more slowly than the
- * cache interval, and a price comparison does not need intraday precision.
+ * <p>Amazon.in and Flipkart both quote INR natively, so nothing currently needs
+ * converting. It stays because a future source may not, and a price silently
+ * shown in the wrong currency is worse than any amount of unused code. The rate
+ * comes from a free, keyless endpoint and is held for a day - rates move far
+ * more slowly than that, and a price comparison needs no intraday precision.
  *
  * <p>If the rate cannot be fetched the last known value is reused, and failing
  * that a hardcoded floor. Getting a slightly stale rate is very much better

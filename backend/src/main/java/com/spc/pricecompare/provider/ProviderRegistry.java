@@ -16,16 +16,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Fans a search out across every usable provider and merges the results.
+ * Fans a search out across every usable marketplace and merges the results.
  *
- * <p>Two things matter here. Providers are queried in parallel with a hard
- * per-provider timeout, so one slow marketplace cannot hold up the response.
- * And the no-key fallback sources are brought in according to
- * {@link ProviderProperties.FallbackMode}: under AUTO they stay out of the way
- * while the marketplaces are working, and step in only when those are
- * unconfigured, out of quota, or returning nothing. The result is an app that
- * shows real Amazon and Flipkart data when it can, and still demonstrates every
- * feature when it cannot.
+ * <p>Providers are queried in parallel with a hard per-provider deadline, so
+ * one slow marketplace cannot hold up the response - whatever the others
+ * returned is served, and the straggler is dropped from that request.
+ *
+ * <p>There was once a second tier of keyless sources here that stood in when no
+ * API key was configured. It was removed once Amazon.in and Flipkart were both
+ * working: those catalogues are synthetic, they overlap with nothing so they
+ * could never contribute a cross-platform match, and they made up a large share
+ * of the catalogue with products no Indian price comparison would show. When a
+ * marketplace is unavailable the database still serves everything already
+ * fetched, which is a better answer than inventing one.
  */
 @Component
 @Slf4j
@@ -64,19 +67,11 @@ public class ProviderRegistry {
         return providers.stream().filter(p -> p.platformCode().equals(platformCode)).findFirst();
     }
 
-    /** Primary sources that are configured and still have quota left. */
+    /** Marketplaces that are configured and still have quota left. */
     public List<ProductProvider> usablePrimaries() {
         return providers.stream()
-                .filter(ProductProvider::isPrimary)
                 .filter(ProductProvider::isConfigured)
                 .filter(this::hasQuota)
-                .toList();
-    }
-
-    public List<ProductProvider> configuredFallbacks() {
-        return providers.stream()
-                .filter(p -> !p.isPrimary())
-                .filter(ProductProvider::isConfigured)
                 .toList();
     }
 
@@ -87,39 +82,16 @@ public class ProviderRegistry {
         return true;
     }
 
-    /**
-     * Searches every applicable provider and returns the merged listings.
-     *
-     * <p>Under AUTO the marketplaces are tried first and the fallbacks are only
-     * consulted if that produced nothing, which keeps quota spend purposeful.
-     */
+    /** Searches every usable marketplace and returns the merged listings. */
     public List<RawListing> searchAll(String query, int limit) {
-        List<ProductProvider> primaries = usablePrimaries();
-        ProviderProperties.FallbackMode mode = properties.getFallbackMode();
+        List<ProductProvider> targets = usablePrimaries();
 
-        List<RawListing> results = new ArrayList<>(runParallel(primaries, query, limit));
-
-        boolean needFallback = switch (mode) {
-            case ALWAYS -> true;
-            case NEVER -> false;
-            case AUTO -> results.isEmpty();
-        };
-
-        if (needFallback) {
-            List<ProductProvider> fallbacks = configuredFallbacks();
-            if (!fallbacks.isEmpty()) {
-                if (primaries.isEmpty()) {
-                    log.info("No usable marketplace provider (missing key, disabled, or out of quota). "
-                                    + "Serving from fallback sources: {}",
-                            fallbacks.stream().map(ProductProvider::displayName).toList());
-                } else if (mode == ProviderProperties.FallbackMode.AUTO) {
-                    log.info("Marketplaces returned nothing for [{}]. Consulting fallback sources.", query);
-                }
-                results.addAll(runParallel(fallbacks, query, limit));
-            }
+        if (targets.isEmpty()) {
+            log.info("No usable marketplace (missing key, disabled, or out of quota); "
+                    + "serving [{}] from stored data only", query);
+            return List.of();
         }
-
-        return results;
+        return runParallel(targets, query, limit);
     }
 
     private List<RawListing> runParallel(List<ProductProvider> targets, String query, int limit) {
@@ -172,18 +144,16 @@ public class ProviderRegistry {
             boolean healthy = failure == null;
 
             String note;
-            if (!configured && p.isPrimary()) {
+            if (!configured) {
                 note = properties.hasRapidApiKey()
                         ? "Disabled in configuration"
                         : "No RapidAPI key configured - see docs/api-keys-setup.md";
-            } else if (configured && quota > 0 && remaining <= 0) {
+            } else if (quota > 0 && remaining <= 0) {
                 note = "Monthly quota exhausted; serving from cache";
             } else if (!healthy) {
                 // A configured provider that fails every call is not live, and
                 // reporting it as live would mislead about why results are empty.
                 note = failure;
-            } else if (!p.isPrimary()) {
-                note = "Fallback source (mode=" + properties.getFallbackMode() + ")";
             } else {
                 note = "Live";
             }
@@ -191,7 +161,7 @@ public class ProviderRegistry {
             out.add(ProviderStatus.builder()
                     .platformCode(p.platformCode())
                     .displayName(p.displayName())
-                    .primary(p.isPrimary())
+                    .primary(true)
                     .configured(configured)
                     .healthy(healthy)
                     .quotaAvailable(remaining > 0)
@@ -201,8 +171,7 @@ public class ProviderRegistry {
                     .note(note)
                     .build());
         }
-        out.sort(Comparator.comparing(ProviderStatus::primary).reversed()
-                .thenComparing(ProviderStatus::displayName));
+        out.sort(Comparator.comparing(ProviderStatus::displayName));
         return out;
     }
 
@@ -210,9 +179,9 @@ public class ProviderRegistry {
      * Raw provider responses, backing GET /api/admin/providers/probe.
      *
      * <p>This exists because the RapidAPI response shapes could not be confirmed
-     * without a key. On the first live call it prints exactly what the
-     * marketplaces return, so the field mapping can be corrected against reality
-     * rather than guesswork.
+     * without a key. On a live call it prints exactly what the marketplaces
+     * return, so the field mapping can be corrected against reality rather than
+     * guesswork.
      */
     public Map<String, Object> probeAll(String query) {
         Map<String, Object> out = new HashMap<>();
@@ -222,8 +191,6 @@ public class ProviderRegistry {
                 continue;
             }
             try {
-                // instanceof rather than a pattern switch: pattern switches are a
-                // preview feature on Java 17, which is this project baseline.
                 Object raw;
                 if (p instanceof AmazonIndiaProvider amazon) {
                     raw = amazon.probe(query).orElse(Map.of("error", "no response"));

@@ -46,7 +46,6 @@ public class AdminController {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("query", q);
         out.put("rapidApiKeyConfigured", providerProperties.hasRapidApiKey());
-        out.put("fallbackMode", providerProperties.getFallbackMode().name());
         out.put("responses", providerRegistry.probeAll(q));
         return out;
     }
