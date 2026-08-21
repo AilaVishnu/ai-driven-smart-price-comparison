@@ -75,6 +75,24 @@ public final class Dtos {
     ) {
     }
 
+    /**
+     * The cheapest price a single platform offers for a product.
+     *
+     * <p>Carried on the summary so a result card can show the actual comparison -
+     * "Amazon 20,739, Flipkart 22,999" - rather than only that two platforms
+     * exist. Showing the spread is the point of the application, and it should
+     * not require opening the product to see it.
+     */
+    @Builder
+    public record PlatformPriceDto(
+            String platformCode,
+            String platformName,
+            BigDecimal price,
+            boolean inStock,
+            boolean cheapest
+    ) {
+    }
+
     @Builder
     public record ProductSummaryDto(
             Long id,
@@ -95,7 +113,9 @@ public final class Dtos {
             BigDecimal maxDiscountPct,
             Boolean inStock,
             /** TOPSIS closeness, 0-100. Null when the result set was too small to rank. */
-            Double valueScore
+            Double valueScore,
+            /** Cheapest price per platform, cheapest first. */
+            List<PlatformPriceDto> platformPrices
     ) {
     }
 

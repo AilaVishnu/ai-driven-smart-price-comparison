@@ -8,7 +8,9 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -78,7 +80,37 @@ public class ProductMapper {
                 .maxDiscountPct(maxDiscount)
                 .inStock(!purchasable.isEmpty())
                 .valueScore(valueScore)
+                .platformPrices(platformPrices(pricingBasis, bestPrice))
                 .build();
+    }
+
+    /**
+     * The cheapest listing on each platform, cheapest platform first.
+     *
+     * <p>Collapsed to one row per platform because a platform listing the same
+     * product three times is noise on a result card - the shopper only cares
+     * what it would cost them there.
+     */
+    private List<Dtos.PlatformPriceDto> platformPrices(List<Offer> offers, BigDecimal bestPrice) {
+        Map<String, Offer> cheapestPerPlatform = new LinkedHashMap<>();
+        for (Offer offer : offers) {
+            cheapestPerPlatform.merge(
+                    offer.getPlatform().getCode(),
+                    offer,
+                    (existing, candidate) ->
+                            candidate.getPriceInr().compareTo(existing.getPriceInr()) < 0 ? candidate : existing);
+        }
+
+        return cheapestPerPlatform.values().stream()
+                .sorted(Comparator.comparing(Offer::getPriceInr))
+                .map(offer -> Dtos.PlatformPriceDto.builder()
+                        .platformCode(offer.getPlatform().getCode())
+                        .platformName(offer.getPlatform().getDisplayName())
+                        .price(offer.getPriceInr())
+                        .inStock(Boolean.TRUE.equals(offer.getInStock()))
+                        .cheapest(bestPrice != null && offer.getPriceInr().compareTo(bestPrice) == 0)
+                        .build())
+                .toList();
     }
 
     public Dtos.OfferDto toOfferDto(Offer offer, BigDecimal bestPrice) {
