@@ -1,0 +1,205 @@
+# Product-review sentiment lexicon, authored for this project.
+#
+# Format:  term<TAB>weight     with weight in [-5, 5]
+#
+# Written specifically for e-commerce review language rather than borrowed from
+# a general-purpose word list. That matters: in product reviews "cheap" usually
+# means shoddy rather than affordable, "returned" is a complaint, and "worth"
+# is praise. A general lexicon scores all three wrongly. Authoring it here also
+# keeps the project free of third-party dataset licensing questions.
+#
+# Lines beginning with # are comments.
+
+# --- strong positive ---
+perfect	5
+flawless	5
+excellent	4
+outstanding	4
+amazing	4
+fantastic	4
+superb	4
+brilliant	4
+awesome	4
+exceptional	4
+delighted	4
+love	3
+loved	3
+wonderful	3
+great	3
+impressive	3
+impressed	3
+satisfied	3
+satisfying	3
+recommend	3
+recommended	3
+premium	3
+reliable	3
+happy	3
+pleased	3
+excellent	4
+terrific	4
+gorgeous	3
+stunning	3
+
+# --- moderate positive ---
+good	2
+nice	2
+solid	2
+sturdy	2
+durable	2
+comfortable	2
+lightweight	2
+compact	2
+sleek	2
+elegant	2
+smooth	2
+responsive	2
+fast	2
+quick	2
+crisp	2
+sharp	2
+vibrant	2
+bright	2
+loud	1
+clear	2
+accurate	2
+handy	2
+useful	2
+worth	2
+worthy	2
+affordable	2
+reasonable	2
+genuine	2
+authentic	2
+original	1
+fine	1
+decent	1
+okay	1
+fair	1
+adequate	1
+works	1
+working	1
+easy	2
+convenient	2
+stylish	2
+beautiful	3
+quality	1
+value	2
+bargain	2
+improved	2
+better	2
+best	3
+fresh	1
+neat	1
+seamless	2
+effortless	2
+intuitive	2
+rich	1
+powerful	2
+efficient	2
+
+# --- moderate negative ---
+bad	-3
+poor	-3
+disappointing	-3
+disappointed	-3
+disappointment	-3
+mediocre	-2
+average	-1
+bland	-2
+dull	-2
+flimsy	-3
+fragile	-2
+cheap	-1
+cheaply	-2
+flimsily	-3
+loose	-2
+wobbly	-2
+noisy	-2
+slow	-2
+laggy	-2
+lag	-2
+sluggish	-2
+heavy	-1
+bulky	-1
+uncomfortable	-2
+difficult	-2
+confusing	-2
+complicated	-2
+overpriced	-3
+expensive	-1
+costly	-1
+pricey	-1
+scratched	-2
+scratch	-2
+dented	-2
+dent	-2
+damaged	-3
+missing	-2
+delayed	-2
+late	-2
+stopped	-3
+stuck	-2
+overheating	-3
+overheats	-3
+heating	-2
+drains	-2
+draining	-2
+blurry	-2
+dim	-2
+faded	-2
+leaking	-3
+loosely	-2
+returned	-2
+returning	-2
+refund	-2
+complaint	-2
+issue	-2
+issues	-2
+problem	-2
+problems	-2
+error	-2
+errors	-2
+bug	-2
+bugs	-2
+glitch	-2
+glitches	-2
+defect	-3
+regret	-3
+avoid	-3
+
+# --- strong negative ---
+terrible	-4
+awful	-4
+horrible	-4
+horrendous	-4
+atrocious	-4
+worst	-5
+useless	-4
+worthless	-4
+garbage	-4
+junk	-4
+rubbish	-4
+trash	-4
+hate	-4
+hated	-4
+defective	-4
+faulty	-4
+broken	-4
+broke	-4
+malfunction	-4
+waste	-4
+wasted	-4
+fake	-4
+counterfeit	-4
+duplicate	-3
+fraud	-5
+scam	-5
+cheated	-4
+misleading	-3
+false	-3
+unusable	-4
+unacceptable	-4
+pathetic	-4
+disgusting	-4
+nightmare	-4
