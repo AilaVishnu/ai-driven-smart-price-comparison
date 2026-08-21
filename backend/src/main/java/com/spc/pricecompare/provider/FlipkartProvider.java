@@ -275,6 +275,10 @@ public class FlipkartProvider extends RapidApiProvider {
         ids.put("televisions", "ckf/czl");
         ids.put("smartwatches", "ajy/buh");
         ids.put("accessories", "tyy/4mr");
+        // Ids taken from live /sub-categories responses rather than guessed, so
+        // adding them costs no extra discovery calls.
+        ids.put("speakers", "0pm/0o7");
+        ids.put("smartbands", "ajy/q7p");
         return Map.copyOf(ids);
     }
 

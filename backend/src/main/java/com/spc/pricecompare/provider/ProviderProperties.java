@@ -98,6 +98,19 @@ public class ProviderProperties {
         private int monthlyQuota = 0;
 
         /**
+         * How many pages to pull per category when seeding the catalogue.
+         * Each page is one API call and roughly two dozen products, so this is
+         * the main lever on catalogue size versus quota spend.
+         */
+        private int seedPages = 1;
+
+        /**
+         * Calls held back from seeding so interactive searches always have
+         * budget left. Seeding stops rather than spending the last of it.
+         */
+        private int quotaReserve = 40;
+
+        /**
          * Search path template, with {q} standing in for the encoded query.
          * Configurable because the RapidAPI search paths could not be confirmed
          * without a key - correcting one is a properties change, not a rebuild.

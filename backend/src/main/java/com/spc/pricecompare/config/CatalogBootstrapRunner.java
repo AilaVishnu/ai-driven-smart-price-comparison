@@ -51,6 +51,9 @@ public class CatalogBootstrapRunner implements ApplicationRunner {
     /** Matches PriceForecastService: below this, no trend is claimed. */
     private static final int MIN_HISTORY_FOR_FORECAST = 5;
 
+    /** Products Flipkart returns per category page. */
+    private static final int PRODUCTS_PER_PAGE = 24;
+
     private final ProviderRegistry providerRegistry;
     private final ProviderProperties providerProperties;
     private final IngestionService ingestionService;
@@ -77,10 +80,10 @@ public class CatalogBootstrapRunner implements ApplicationRunner {
             // Seeding is still decided per platform: a marketplace that only
             // became available after the catalogue was first filled would
             // otherwise never contribute anything.
-            seedFlipkartCategoriesIfEmpty();
+            seedFlipkartCategories();
         } else {
             seedCatalogue();
-            seedFlipkartCategoriesIfEmpty();
+            seedFlipkartCategories();
         }
 
         catalogMaintenanceService.recategorizeFromTitles();
@@ -154,15 +157,18 @@ public class CatalogBootstrapRunner implements ApplicationRunner {
     }
 
     /**
-     * Populates the catalogue with Flipkart products, one call per category.
+     * Populates the catalogue with Flipkart products, page by page.
      *
-     * <p>Flipkart is reached by category rather than by keyword because its free
-     * plan paywalls search. Seeding here is what gives the matching engine
-     * Flipkart products to link live Amazon results against - without it, there
-     * is nothing on the Flipkart side to compare with and the cross-platform
-     * view stays empty.
+     * <p>Flipkart is reached by category rather than keyword because its free
+     * plan paywalls search, so depth here is what the catalogue is made of.
+     * Seeding is decided per category against a target rather than on whether
+     * anything exists: a category seeded one page deep last run gets topped up
+     * on the next, and a run that partly failed finishes itself.
+     *
+     * <p>A reserve of calls is always left untouched so interactive searches
+     * still have budget after seeding.
      */
-    private void seedFlipkartCategoriesIfEmpty() {
+    private void seedFlipkartCategories() {
         FlipkartProvider flipkart = providerRegistry.all().stream()
                 .filter(FlipkartProvider.class::isInstance)
                 .map(FlipkartProvider.class::cast)
@@ -172,43 +178,55 @@ public class CatalogBootstrapRunner implements ApplicationRunner {
         if (flipkart == null || !flipkart.isConfigured()) {
             return;
         }
+
+        ProviderProperties.Source config = providerProperties.source("flipkart");
+        int pages = Math.max(1, config.getSeedPages());
+        int reserve = Math.max(0, config.getQuotaReserve());
+        int target = pages * PRODUCTS_PER_PAGE;
+
         Map<String, String> categories = FlipkartProvider.categoryIds();
+        int seeded = 0;
+        int calls = 0;
 
-        // Decided per category so a run that partly timed out finishes next
-        // time, rather than a single successful category marking the whole
-        // platform as done.
-        Map<String, String> pending = new java.util.LinkedHashMap<>();
         for (Map.Entry<String, String> category : categories.entrySet()) {
-            if (offerRepository.countByPlatformCodeAndCategorySlug("FLIPKART", category.getKey()) == 0) {
-                pending.put(category.getKey(), category.getValue());
+            long existing = offerRepository.countByPlatformCodeAndCategorySlug("FLIPKART", category.getKey());
+            if (existing >= target) {
+                continue;
             }
-        }
 
-        if (pending.isEmpty()) {
-            log.info("Flipkart catalogue already covers all {} categories; skipping seed", categories.size());
-            return;
-        }
+            // Skip the pages already covered instead of re-fetching them.
+            int firstPage = (int) (existing / PRODUCTS_PER_PAGE) + 1;
 
-        log.info("Seeding Flipkart catalogue: {} of {} categories still empty",
-                pending.size(), categories.size());
-
-        int total = 0;
-        for (Map.Entry<String, String> category : pending.entrySet()) {
-            try {
-                List<RawListing> listings =
-                        flipkart.fetchByCategory(category.getValue(), category.getKey(), 1);
-                if (!listings.isEmpty()) {
-                    ingestionService.ingest(listings);
-                    total += listings.size();
-                    log.info("  {} ({}) -> {} products", category.getKey(), category.getValue(), listings.size());
-                } else {
-                    log.warn("  {} ({}) -> nothing returned", category.getKey(), category.getValue());
+            for (int page = firstPage; page <= pages; page++) {
+                if (flipkart.remainingQuota() <= reserve) {
+                    log.warn("Stopping catalogue seed: only {} Flipkart calls left and {} are held "
+                            + "in reserve for searches", flipkart.remainingQuota(), reserve);
+                    log.info("Seeded {} listings across {} calls before stopping", seeded, calls);
+                    return;
                 }
-            } catch (Exception e) {
-                log.warn("  Flipkart category {} failed: {}", category.getKey(), e.toString());
+                try {
+                    List<RawListing> listings =
+                            flipkart.fetchByCategory(category.getValue(), category.getKey(), page);
+                    calls++;
+                    if (listings.isEmpty()) {
+                        break;
+                    }
+                    ingestionService.ingest(listings);
+                    seeded += listings.size();
+                    log.info("  {} page {} -> {} products", category.getKey(), page, listings.size());
+                } catch (Exception e) {
+                    log.warn("  {} page {} failed: {}", category.getKey(), page, e.toString());
+                    break;
+                }
             }
         }
-        log.info("Flipkart seed complete: {} listings ingested", total);
+
+        if (seeded > 0) {
+            log.info("Catalogue seed: {} listings ingested across {} calls, {} Flipkart calls left",
+                    seeded, calls, flipkart.remainingQuota());
+        } else {
+            log.info("Catalogue already at target depth across all {} categories", categories.size());
+        }
     }
 
     /**
