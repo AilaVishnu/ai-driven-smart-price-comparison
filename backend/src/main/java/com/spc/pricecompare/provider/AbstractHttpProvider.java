@@ -38,6 +38,21 @@ public abstract class AbstractHttpProvider implements ProductProvider {
      */
     private volatile String healthNote;
 
+    /** When that failure happened, so a stale one can be allowed to lapse. */
+    private volatile long healthNoteAt;
+
+    /**
+     * How long a failure keeps a provider marked down.
+     *
+     * <p>Without this a single transient upstream error marks a provider off
+     * forever, because the flag only clears on a later success and a provider
+     * that is never called again never gets one. That is exactly what happened:
+     * an upstream 500 during seeding left Flipkart showing as off, and queries
+     * that map to no browsable category make no call at all, so nothing ever
+     * cleared it. A ten minute old failure is not evidence about right now.
+     */
+    private static final long HEALTH_NOTE_TTL_MS = 10 * 60 * 1000L;
+
     protected AbstractHttpProvider(RestClient restClient,
                                    QuotaGuard quotaGuard,
                                    ProviderProperties properties,
@@ -83,6 +98,7 @@ public abstract class AbstractHttpProvider implements ProductProvider {
             Integer remaining = extractRemaining(response);
             quotaGuard.record(platformCode(), endpointLabel, CallStatus.SUCCESS, remaining);
             healthNote = null;
+            healthNoteAt = 0L;
             return Optional.ofNullable(response.getBody());
 
         } catch (Exception e) {
@@ -91,6 +107,7 @@ public abstract class AbstractHttpProvider implements ProductProvider {
             quotaGuard.record(platformCode(), endpointLabel,
                     timeout ? CallStatus.TIMEOUT : CallStatus.FAILURE, null);
             healthNote = classifyFailure(message);
+            healthNoteAt = System.currentTimeMillis();
             log.warn("{} call to {} failed: {}", platformCode(), endpointLabel, message);
             return Optional.empty();
         }
@@ -127,9 +144,26 @@ public abstract class AbstractHttpProvider implements ProductProvider {
         return "Last call failed - serving from cached data";
     }
 
-    /** Null when healthy; otherwise why the last call failed. */
+    /**
+     * Null when healthy; otherwise why the last call failed.
+     *
+     * <p>A configuration problem is reported until it is fixed, since it will
+     * not resolve itself. A transient failure lapses, so one upstream blip does
+     * not leave a working provider labelled off indefinitely.
+     */
     public String healthNote() {
-        return healthNote;
+        String note = healthNote;
+        if (note == null) {
+            return null;
+        }
+        boolean configurationProblem = note.contains("not subscribed")
+                || note.contains("invalid")
+                || note.contains("plan covers")
+                || note.contains("host and search-path");
+        if (configurationProblem) {
+            return note;
+        }
+        return System.currentTimeMillis() - healthNoteAt > HEALTH_NOTE_TTL_MS ? null : note;
     }
 
     /** RapidAPI reports true remaining quota in a response header; prefer it over local counting. */
