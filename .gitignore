@@ -1,0 +1,20 @@
+# Build output
+backend/target/
+frontend/dist/
+frontend/node_modules/
+
+# Local dev database (H2)
+backend/data/
+*.mv.db
+*.trace.db
+
+# Local secrets - never commit an API key
+backend/src/main/resources/application-local.properties
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
