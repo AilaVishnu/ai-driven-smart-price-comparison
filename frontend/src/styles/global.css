@@ -207,6 +207,23 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 .badge-negative { background: var(--negative-soft);  border-color: var(--negative-border);  color: var(--negative); }
 .badge-accent   { background: var(--accent-soft);    border-color: var(--accent-border);    color: var(--accent); }
 
+/* ----------------------------------------------------------- platform dot */
+
+/* A small colour cue that identifies a marketplace at a glance. Used in the
+   price comparison, offer table, platform status row and product cards; without
+   an explicit size it collapses to nothing, so it lives here rather than beside
+   any one of them. */
+.platform-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--platform-fallback);
+  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 6%, transparent);
+  flex: none;
+  vertical-align: middle;
+}
+
 /* --------------------------------------------------------------- utility */
 
 .muted   { color: var(--text-muted); }
@@ -256,6 +273,44 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
   color: var(--text-muted);
 }
 
+/* Standalone, page-level empties (the ones the shared EmptyState/ErrorState
+   components render) get a soft panel so a "nothing here" reads as a deliberate
+   state rather than a stray paragraph. Inline empties inside a card keep the
+   plain, borderless treatment. */
+.empty-state-boxed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  /* Capped and centred so the panel reads as a composed state rather than a
+     sparse band stretched across the whole content width. */
+  max-width: 34rem;
+  margin-inline: auto;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-sunken);
+}
+.empty-state-boxed > * { margin: 0; }
+
+.empty-state-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-subtle);
+  font-size: 1.4rem;
+}
+.empty-state-icon svg { display: block; }
+.empty-state-icon-negative {
+  background: var(--negative-soft);
+  border-color: var(--negative-border);
+  color: var(--negative);
+}
+
 .skeleton {
   background: linear-gradient(90deg,
     var(--surface-sunken) 25%,
@@ -271,10 +326,44 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
   100% { background-position: 0 50%; }
 }
 
+/* --------------------------------------------------------------- motion */
+
+/* Content arrives with a short rise-and-fade rather than snapping in. The
+   resting state is identical, so this softens the arrival without changing how
+   anything looks once settled. The reduced-motion guard below removes it. */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Each routed page fades in on mount. Kept to opacity alone so it never fights a
+   sticky child (a transform would become its containing block) and never
+   compounds with the per-element rises below. The header sits outside .page, so
+   it stays put while the content underneath it changes. */
+.page {
+  animation: fade-in 280ms ease both;
+}
+
+/* A reusable hook for anything that should enter on its own. */
+.rise-in { animation: rise-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    /* Also clear staggered delays, or content would still blink in one item at a
+       time (held invisible by animation-fill-mode until each delay elapsed). */
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
 }

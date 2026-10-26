@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,7 +39,38 @@ public class ScoringInputBuilder {
 
     private final ReviewRepository reviewRepository;
 
+    /**
+     * Mean sentiment for a set of products, rescaled onto [0, 1], fetched in one
+     * query. Pass the result to {@link #toAlternative(Product, List, Map)} so a
+     * whole result set is scored without a per-product review lookup. Products
+     * absent from the map simply have no scored reviews and score neutral.
+     */
+    public Map<Long, Double> sentimentByProduct(Collection<Long> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Double> out = new HashMap<>();
+        for (ReviewRepository.ProductSentiment row : reviewRepository.meanSentimentByProductIds(productIds)) {
+            if (row.getProductId() != null && row.getMeanSentiment() != null) {
+                out.put(row.getProductId(), rescaleSentiment(row.getMeanSentiment()));
+            }
+        }
+        return out;
+    }
+
     public TopsisScoringService.Alternative toAlternative(Product product, List<Offer> offers) {
+        return toAlternative(product, offers, averageSentiment(product.getId()));
+    }
+
+    /** As {@link #toAlternative(Product, List)}, but taking sentiment from a precomputed batch. */
+    public TopsisScoringService.Alternative toAlternative(Product product,
+                                                          List<Offer> offers,
+                                                          Map<Long, Double> sentimentByProduct) {
+        return toAlternative(product, offers,
+                sentimentByProduct.getOrDefault(product.getId(), NEUTRAL_SENTIMENT));
+    }
+
+    private TopsisScoringService.Alternative toAlternative(Product product, List<Offer> offers, double sentiment) {
         Map<Criterion, Double> values = new EnumMap<>(Criterion.class);
 
         List<Offer> priced = offers.stream()
@@ -83,7 +116,7 @@ public class ScoringInputBuilder {
         values.put(Criterion.RATING, rating);
         values.put(Criterion.RATING_COUNT, ratingCount);
         values.put(Criterion.DISCOUNT, discount);
-        values.put(Criterion.SENTIMENT, averageSentiment(product.getId()));
+        values.put(Criterion.SENTIMENT, sentiment);
         values.put(Criterion.DELIVERY, delivery);
         values.put(Criterion.AVAILABILITY, anyInStock ? 1.0 : 0.0);
 
@@ -111,6 +144,11 @@ public class ScoringInputBuilder {
         if (counted == 0) {
             return NEUTRAL_SENTIMENT;
         }
-        return ((total / counted) + 1.0) / 2.0;
+        return rescaleSentiment(total / counted);
+    }
+
+    /** Maps a mean sentiment on [-1, 1] onto the non-negative [0, 1] axis TOPSIS needs. */
+    private static double rescaleSentiment(double mean) {
+        return (mean + 1.0) / 2.0;
     }
 }

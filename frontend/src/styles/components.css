@@ -182,6 +182,9 @@
 
 .section-head { margin-bottom: var(--space-4); align-items: flex-end; }
 .section-head h2 { font-size: var(--text-xl); }
+/* When the class sits directly on a heading (a section with no trailing link),
+   it still needs the sectioned size rather than the default h2/h3 scale. */
+h2.section-head, h3.section-head { font-size: var(--text-xl); }
 
 .how-it-works { padding-bottom: var(--space-6); }
 .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-4); }
@@ -337,7 +340,6 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--space-2);
-  margin-top: auto;
 }
 
 .pcard-price-block { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -352,11 +354,26 @@
 
 .pcard-only { display: inline-flex; align-items: center; gap: 5px; }
 
-.pcard-actions { display: flex; gap: var(--space-2); }
+/* The CTA row is bottom-aligned so buttons line up across a grid; the price
+   block then sits directly under the rating instead of leaving a gap in cards
+   that have no multi-platform comparison to fill the space. */
+.pcard-actions { display: flex; gap: var(--space-2); margin-top: auto; }
 .pcard-compare { flex: 1; }
 .pcard-fav { padding: 0.3rem 0.55rem; font-size: 1rem; line-height: 1; }
-.heart { color: var(--text-subtle); }
-.heart-on { color: var(--negative); }
+.pcard-fav:hover:not(:disabled) .heart { transform: scale(1.12); }
+.heart {
+  display: inline-block;
+  color: var(--text-subtle);
+  transition: color 130ms ease, transform 130ms ease;
+}
+/* A small pop confirms the toggle landed; colour alone is easy to miss. */
+.heart-on { color: var(--negative); animation: heart-pop 280ms ease; }
+
+@keyframes heart-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
 
 /* ------------------------------------------------------- price comparison */
 
@@ -412,6 +429,9 @@
   border-top: 1px solid var(--border-strong);
   box-shadow: var(--shadow-lg);
   padding: var(--space-3) 0;
+  /* Slides up the first time a product is added, so the tray announces itself
+     instead of appearing under the pointer. */
+  animation: slide-up 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .compare-tray-inner { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
@@ -816,3 +836,48 @@
 
 /* Leave room for the sticky compare tray so it never covers page content. */
 body:has(.compare-tray) main { padding-bottom: 96px; }
+
+/* ------------------------------------------------------------------ motion */
+
+/* A grid assembles with a short stagger rather than snapping in all at once.
+   The delay is capped at the eighth item so a long results page never waits on
+   a visible cascade; everything past it arrives together. Skeleton cards use
+   .card, not .pcard, so loading placeholders keep their shimmer untouched. */
+.product-grid > .pcard,
+.how-card { animation: rise-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+.product-grid > .pcard:nth-child(1),
+.how-card:nth-child(1) { animation-delay: 20ms; }
+.product-grid > .pcard:nth-child(2),
+.how-card:nth-child(2) { animation-delay: 60ms; }
+.product-grid > .pcard:nth-child(3),
+.how-card:nth-child(3) { animation-delay: 100ms; }
+.product-grid > .pcard:nth-child(4) { animation-delay: 140ms; }
+.product-grid > .pcard:nth-child(5) { animation-delay: 180ms; }
+.product-grid > .pcard:nth-child(6) { animation-delay: 220ms; }
+.product-grid > .pcard:nth-child(7) { animation-delay: 260ms; }
+.product-grid > .pcard:nth-child(n + 8) { animation-delay: 300ms; }
+
+/* The landing hero introduces itself top-down: eyebrow, headline, sub, search. */
+.hero-inner > * { animation: rise-in 460ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.hero-inner > *:nth-child(1) { animation-delay: 40ms; }
+.hero-inner > *:nth-child(2) { animation-delay: 110ms; }
+.hero-inner > *:nth-child(3) { animation-delay: 180ms; }
+.hero-inner > *:nth-child(4) { animation-delay: 250ms; }
+
+/* ---------------------------------------------------------- mobile edges */
+
+@media (max-width: 640px) {
+  /* On a phone the tray stacks: the picks scroll on their own line and the
+     actions sit full-width beneath, each button sharing the row evenly. */
+  .compare-tray-inner { gap: var(--space-2); }
+  .compare-tray-actions { width: 100%; }
+  .compare-tray-actions .btn { flex: 1; }
+  .tray-slot { display: none; }
+  /* The tray is taller when stacked, so give the page more room beneath it. */
+  body:has(.compare-tray) main { padding-bottom: 140px; }
+
+  /* Let the sort control breathe on the results header instead of overflowing. */
+  .results-sort { width: 100%; }
+  .results-sort .select { width: 100%; min-width: 0; }
+}

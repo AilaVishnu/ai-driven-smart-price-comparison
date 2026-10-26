@@ -80,8 +80,18 @@ public class SearchService {
 
         List<Product> stored = findCandidates(terms, parsed);
 
+        // When the query pins a platform, coverage is judged for that platform
+        // alone rather than across all of them. A query can be thick with one
+        // marketplace's listings and hold none from the pinned one, and the
+        // overall count hid exactly that: a search filtered to Amazon.in came
+        // back empty because every stored smartwatch was a Flipkart listing,
+        // yet the stored count sat far above the threshold so the marketplaces
+        // were never asked. Measuring the pinned platform sends the search live
+        // precisely when the asked-for source is the one we are missing.
+        String platformFilter = filters == null ? null : filters.get("platform");
+
         boolean fetchedLive = false;
-        if (!terms.isBlank() && stored.size() < THIN_COVERAGE_THRESHOLD
+        if (!terms.isBlank() && coverageFor(stored, platformFilter) < THIN_COVERAGE_THRESHOLD
                 && recentlyFetched.getIfPresent(cacheKey(terms)) == null) {
             fetchedLive = fetchFromProviders(terms);
             if (fetchedLive) {
@@ -211,6 +221,27 @@ public class SearchService {
             "any", "get", "under", "over", "from", "smart", "good", "cheap"
     );
 
+    /**
+     * How many stored candidates could satisfy the search: counted for the
+     * pinned platform when the query names one, and across every platform
+     * otherwise.
+     *
+     * <p>A platform filter selects a data source we may simply never have
+     * queried, so thin coverage of <em>that</em> platform is what should send
+     * the search live - independent of how much another marketplace already
+     * contributed to the same terms.
+     */
+    private long coverageFor(List<Product> stored, String platformCode) {
+        if (platformCode == null || platformCode.isBlank()) {
+            return stored.size();
+        }
+        return stored.stream()
+                .filter(p -> p.getOffers().stream()
+                        .anyMatch(o -> o.getPlatform() != null
+                                && o.getPlatform().getCode().equalsIgnoreCase(platformCode)))
+                .count();
+    }
+
     private boolean fetchFromProviders(String terms) {
         try {
             List<RawListing> listings =
@@ -241,8 +272,12 @@ public class SearchService {
         if (candidates.size() < 2) {
             return Map.of();
         }
+        // Sentiment for the whole set in one query. Fetching it per product
+        // turned browsing the full catalogue into a thousand review lookups.
+        Map<Long, Double> sentiment = scoringInputBuilder.sentimentByProduct(
+                candidates.stream().map(pw -> pw.product().getId()).toList());
         List<TopsisScoringService.Alternative> alternatives = candidates.stream()
-                .map(pw -> scoringInputBuilder.toAlternative(pw.product(), pw.offers()))
+                .map(pw -> scoringInputBuilder.toAlternative(pw.product(), pw.offers(), sentiment))
                 .toList();
 
         Map<Long, Double> scores = new LinkedHashMap<>();
