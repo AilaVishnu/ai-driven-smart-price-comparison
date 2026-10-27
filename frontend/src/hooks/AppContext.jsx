@@ -72,7 +72,10 @@ export function AppProvider({ children }) {
   const inCompare = useCallback((id) => compareIds.includes(id), [compareIds])
 
   // ----------------------------------------------------------------- theme
-  const [theme, setTheme] = useStoredState('spc.theme', 'system')
+  // Defaults to the light look. The key is versioned so this new default
+  // reaches everyone once, rather than being shadowed by an older stored
+  // 'system' choice; the toggle still writes and reads this key thereafter.
+  const [theme, setTheme] = useStoredState('spc.theme.v2', 'light')
 
   useEffect(() => {
     const root = document.documentElement

@@ -16,29 +16,19 @@
   min-height: var(--header-height);
 }
 
-.brand { display: flex; align-items: center; gap: var(--space-2); color: var(--text); flex: none; }
+.brand { display: flex; align-items: center; color: var(--text); flex: none; }
 .brand:hover { text-decoration: none; color: var(--text); }
 
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 34px; height: 34px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #ec4899));
-  color: #fff;
-  font-weight: 700;
-  font-size: 1.05rem;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 40%, transparent);
+/* A pure-type wordmark in the display face, with a single accent full stop -
+   the editorial masthead doing the identity rather than a gradient chip. */
+.brand-word {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
-
-.brand-text { display: flex; flex-direction: column; line-height: 1.1; }
-.brand-text strong { font-size: var(--text-sm); letter-spacing: -0.01em; }
-.brand-sub {
-  font-size: 10px;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-subtle);
-}
+.brand-dot { color: var(--accent); }
 
 .header-search { flex: 1; min-width: 0; max-width: 460px; }
 
@@ -119,43 +109,46 @@
 
 /* -------------------------------------------------------------------- hero */
 
+/* Left-aligned and type-led: the headline is the design. No centred stack,
+   no eyebrow pill, no gradient glow - just a big display headline, a short
+   accent rule, and the search sitting under it. A hairline closes the band. */
 .hero {
   padding: var(--space-7) 0 var(--space-6);
-  /* A soft wash behind the fold, so the page opens with something rather than
-     dropping straight into a grid. */
-  background:
-    radial-gradient(60rem 22rem at 50% -6rem,
-      color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+  border-bottom: 1px solid var(--border);
 }
 
 .hero-inner {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: var(--space-3);
-}
-
-.hero-eyebrow {
-  display: inline-block;
-  padding: 0.2rem 0.7rem;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--accent-border);
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: var(--text-xs);
-  font-weight: 600;
+  align-items: flex-start;
+  text-align: left;
+  gap: var(--space-4);
 }
 
 .hero-title {
-  font-size: clamp(2.1rem, 6vw, 3.6rem);
-  line-height: 1.05;
-  letter-spacing: -0.035em;
-  margin: var(--space-2) 0 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2.6rem, 7vw, 5rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin: 0;
+  max-width: 18ch;
 }
 
-.hero-sub { max-width: 54ch; font-size: var(--text-lg); margin: 0; }
-.hero-search { width: 100%; max-width: 640px; margin-top: var(--space-3); }
+.hero-rule {
+  width: 72px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.hero-sub {
+  max-width: 50ch;
+  font-size: var(--text-lg);
+  color: var(--text-muted);
+  margin: 0;
+}
+.hero-search { width: 100%; max-width: 620px; margin-top: var(--space-2); }
 
 .hero-stats {
   display: flex;
@@ -180,36 +173,17 @@
   font-variant-numeric: tabular-nums;
 }
 
-.section-head { margin-bottom: var(--space-4); align-items: flex-end; }
-.section-head h2 { font-size: var(--text-xl); }
+/* Section headers sit on a hairline rule, like a column masthead. */
+.section-head {
+  margin-bottom: var(--space-5);
+  align-items: flex-end;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+.section-head h2 { font-size: var(--text-2xl); }
 /* When the class sits directly on a heading (a section with no trailing link),
    it still needs the sectioned size rather than the default h2/h3 scale. */
-h2.section-head, h3.section-head { font-size: var(--text-xl); }
-
-.how-it-works { padding-bottom: var(--space-6); }
-.how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-4); }
-
-.how-card {
-  position: relative;
-  padding: var(--space-5);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-}
-.how-card h3 { font-size: var(--text-base); margin: var(--space-3) 0 var(--space-2); }
-.how-card p { margin: 0; }
-
-.how-step {
-  display: grid;
-  place-items: center;
-  width: 28px; height: 28px;
-  border-radius: var(--radius-full);
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-border);
-  color: var(--accent);
-  font-size: var(--text-sm);
-  font-weight: 700;
-}
+h2.section-head, h3.section-head { font-size: var(--text-2xl); }
 
 /* ------------------------------------------------------------ product card */
 
@@ -218,14 +192,16 @@ h2.section-head, h3.section-head { font-size: var(--text-xl); }
   flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   overflow: hidden;
+  /* Flat by default - the grid reads as a clean set of framed tiles, and
+     elevation is kept for the hover so it means something. */
   transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
 }
 .pcard:hover {
-  border-color: var(--border-strong);
+  border-color: var(--text);
   box-shadow: var(--shadow);
-  transform: translateY(-3px);
+  transform: translateY(-2px);
 }
 .pcard-selected {
   border-color: var(--accent);
@@ -320,9 +296,9 @@ h2.section-head, h3.section-head { font-size: var(--text-xl); }
 
 .pcard-title {
   color: var(--text);
-  font-size: var(--text-sm);
-  font-weight: 550;
-  line-height: 1.4;
+  font-size: var(--text-base);
+  font-weight: 600;
+  line-height: 1.35;
 }
 .pcard-title:hover { color: var(--accent); text-decoration: none; }
 
@@ -843,15 +819,11 @@ body:has(.compare-tray) main { padding-bottom: 96px; }
    The delay is capped at the eighth item so a long results page never waits on
    a visible cascade; everything past it arrives together. Skeleton cards use
    .card, not .pcard, so loading placeholders keep their shimmer untouched. */
-.product-grid > .pcard,
-.how-card { animation: rise-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.product-grid > .pcard { animation: rise-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-.product-grid > .pcard:nth-child(1),
-.how-card:nth-child(1) { animation-delay: 20ms; }
-.product-grid > .pcard:nth-child(2),
-.how-card:nth-child(2) { animation-delay: 60ms; }
-.product-grid > .pcard:nth-child(3),
-.how-card:nth-child(3) { animation-delay: 100ms; }
+.product-grid > .pcard:nth-child(1) { animation-delay: 20ms; }
+.product-grid > .pcard:nth-child(2) { animation-delay: 60ms; }
+.product-grid > .pcard:nth-child(3) { animation-delay: 100ms; }
 .product-grid > .pcard:nth-child(4) { animation-delay: 140ms; }
 .product-grid > .pcard:nth-child(5) { animation-delay: 180ms; }
 .product-grid > .pcard:nth-child(6) { animation-delay: 220ms; }

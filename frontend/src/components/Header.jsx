@@ -12,12 +12,8 @@ export default function Header() {
   return (
     <header className="site-header">
       <div className="container site-header-inner">
-        <Link to="/" className="brand" aria-label="Smart Price Comparison, home">
-          <span className="brand-mark" aria-hidden="true">₹</span>
-          <span className="brand-text">
-            <strong>Smart Price</strong>
-            <span className="brand-sub">Comparison</span>
-          </span>
+        <Link to="/" className="brand" aria-label="SmartPrice, home">
+          <span className="brand-word">SmartPrice<span className="brand-dot">.</span></span>
         </Link>
 
         <div className="header-search">

@@ -17,19 +17,18 @@ export default function Home() {
     <div className="page">
       <section className="hero">
         <div className="container hero-inner">
-          <span className="hero-eyebrow">Across Amazon.in, Flipkart and more</span>
           <h1 className="hero-title">
-            One search.<br />Every price.
+            Compare prices before you buy.
           </h1>
-          <p className="hero-sub muted">
-            The same product, found on every platform that stocks it, ranked by what matters to
-            you — not by who paid to be first.
+          <div className="hero-rule" />
+          <p className="hero-sub">
+            Search for a product and see what Amazon and Flipkart each charge for it,
+            with ratings and reviews on the same page.
           </p>
 
           <div className="hero-search">
             <SearchBar autoFocus />
           </div>
-
         </div>
       </section>
 
@@ -40,9 +39,9 @@ export default function Home() {
           <section>
             <div className="row section-head">
               <div>
-                <h2>Same product, different price</h2>
+                <h2>Sold on more than one site</h2>
                 <p className="small muted" style={{ margin: 0 }}>
-                  Found on more than one platform, so the gap is real money.
+                  The same product on different platforms, so you can compare the price directly.
                 </p>
               </div>
             </div>
@@ -72,40 +71,9 @@ export default function Home() {
           )}
           {!deals.loading && !deals.error && deals.data && deals.data.length === 0 && (
             <p className="muted small">
-              No discounted listings yet. Search for something and the catalogue fills in.
+              Nothing discounted right now. Search for a product to get started.
             </p>
           )}
-        </section>
-
-        <section className="how-it-works">
-          <h2 className="section-head">How the ranking works</h2>
-          <div className="how-grid">
-            <article className="how-card">
-              <span className="how-step">1</span>
-              <h3>Listings are matched</h3>
-              <p className="small muted">
-                Platforms title the same product differently. A TF-IDF and model-signature matcher
-                works out which listings are genuinely the same item, so prices compare like for
-                like — and refuses to merge an iPhone 16 with a 16e.
-              </p>
-            </article>
-            <article className="how-card">
-              <span className="how-step">2</span>
-              <h3>Reviews are read</h3>
-              <p className="small muted">
-                Customer reviews are scored for sentiment and split by aspect, so you can see the
-                battery is well liked even where delivery is not.
-              </p>
-            </article>
-            <article className="how-card">
-              <span className="how-step">3</span>
-              <h3>Options are ranked</h3>
-              <p className="small muted">
-                A TOPSIS model weighs price, rating, discount, sentiment and delivery. You set the
-                weights, and every score shows its working.
-              </p>
-            </article>
-          </div>
         </section>
       </div>
     </div>

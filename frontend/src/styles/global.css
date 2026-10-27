@@ -30,6 +30,14 @@ h1, h2, h3, h4 {
   letter-spacing: -0.015em;
 }
 
+/* The big headings carry the editorial voice in the display serif; the smaller
+   two stay in the UI sans so labels and sub-headings read as interface. */
+h1, h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
 h1 { font-size: var(--text-3xl); }
 h2 { font-size: var(--text-2xl); }
 h3 { font-size: var(--text-xl); }
@@ -138,7 +146,7 @@ button { cursor: pointer; }
   background: var(--accent);
   border-color: transparent;
   color: var(--accent-contrast);
-  box-shadow: 0 1px 2px rgba(35, 22, 61, 0.16);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
